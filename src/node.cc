@@ -2701,6 +2701,8 @@ void SetupProcessObject(Environment* env,
                     "platform",
                     OneByteString(env->isolate(), NODE_PLATFORM));
 
+  READONLY_PROPERTY(process, "ischakra", True(env->isolate()));
+                    
   // process.argv
   Local<Array> arguments = Array::New(env->isolate(), argc);
   for (int i = 0; i < argc; ++i) {
@@ -3193,7 +3195,12 @@ static void StartDebug(Environment* env, bool wait) {
 
   env->debugger_agent()->set_dispatch_handler(
         DispatchMessagesDebugAgentCallback);
-  debugger_running = env->debugger_agent()->Start(debug_port, wait);
+  debugger_running =
+#ifdef USE_CHAKRA
+    v8::Debug::EnableAgent();
+#else
+    env->debugger_agent()->Start(debug_port, wait);
+#endif
   if (debugger_running == false) {
     fprintf(stderr, "Starting debugger on port %d failed\n", debug_port);
     fflush(stderr);

@@ -295,6 +295,11 @@ parser.add_option('--xcode',
     dest='use_xcode',
     help='generate build files for use with xcode')
 
+parser.add_option("--use-chakra",
+    action="store_true",
+    dest="use_chakra",
+    help="Use the Chakra JavaScript engine instead of V8")
+
 (options, args) = parser.parse_args()
 
 # set up auto-download list
@@ -948,6 +953,16 @@ def configure_intl(o):
 # Print a warning when the compiler is too old.
 check_compiler()
 
+def configure_chakra(o):
+  o['variables']['node_use_chakra'] = b(options.use_chakra)
+  if options.use_chakra:
+      private_chakra_dir = os.environ.get("PRIVATE_CHAKRA_DIR")
+      if private_chakra_dir:
+        o['variables']['node_use_private_chakra'] = 'true'
+        o['variables']['private_chakra_dir'] = private_chakra_dir
+        o['variables']['private_chakra_build'] = 'chk' if options.debug else 'fre'
+
+
 # determine the "flavor" (operating system) we're building for,
 # leveraging gyp's GetFlavor function
 flavor_params = {}
@@ -972,6 +987,7 @@ configure_openssl(output)
 configure_winsdk(output)
 configure_intl(output)
 configure_fullystatic(output)
+configure_chakra(output)
 
 # variables should be a root level element,
 # move everything else to target_defaults

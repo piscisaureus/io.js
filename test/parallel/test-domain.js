@@ -87,7 +87,12 @@ d.on('error', function(er) {
       assert.ok(!er.domainEmitter);
       assert.ok(!er.domainBound);
       break;
-
+    // handles the error messsage from chakra, which is different than the message from v8
+    case 'Unable to get property \'isDirectory\' of undefined or null reference':
+      assert.equal(er.domain, d);
+      assert.ok(!er.domainEmitter);
+      assert.ok(!er.domainBound);
+      break;
     case 'nextTick execution loop':
       assert.equal(er.domain, d);
       assert.ok(!er.domainEmitter);

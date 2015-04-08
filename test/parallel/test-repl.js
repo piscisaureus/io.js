@@ -103,7 +103,7 @@ function error_test() {
       expect: prompt_unix },
     // But passing the same string to eval() should throw
     { client: client_unix, send: 'eval("function test_func() {")',
-      expect: /^SyntaxError: Unexpected end of input/ },
+      expect: /^SyntaxError: (Unexpected end of input|Expected '}')/ },
     // Can handle multiline template literals
     { client: client_unix, send: '`io.js',
       expect: prompt_multiline },
@@ -127,37 +127,39 @@ function error_test() {
     // invalid input to JSON.parse error is special case of syntax error,
     // should throw
     { client: client_unix, send: 'JSON.parse(\'{invalid: \\\'json\\\'}\');',
-      expect: /^SyntaxError: Unexpected token i/ },
+      expect: /^SyntaxError: (Unexpected token i|Invalid character)/ },
     // end of input to JSON.parse error is special case of syntax error,
     // should throw
     { client: client_unix, send: 'JSON.parse(\'066\');',
-      expect: /^SyntaxError: Unexpected number/ },
+      expect: /^SyntaxError: (Unexpected number|Invalid number)/ },
     // should throw
     { client: client_unix, send: 'JSON.parse(\'{\');',
-      expect: /^SyntaxError: Unexpected end of input/ },
+      expect: /^SyntaxError: (Unexpected end of input|Syntax error)/ },
     // invalid RegExps are a special case of syntax error,
     // should throw
     { client: client_unix, send: '/(/;',
-      expect: /^SyntaxError: Invalid regular expression\:/ },
+      expect: /^SyntaxError: (Invalid regular expression\:|Expected '\)' in regular expression)/ },
     // invalid RegExp modifiers are a special case of syntax error,
     // should throw (GH-4012)
     { client: client_unix, send: 'new RegExp("foo", "wrong modifier");',
-      expect: /^SyntaxError: Invalid flags supplied to RegExp constructor/ },
+      expect: /^SyntaxError: (Invalid flags supplied to RegExp constructor|Syntax error in regular expression)/ },
     // strict mode syntax errors should be caught (GH-5178)
     { client: client_unix, send: '(function() { "use strict"; return 0755; })()',
-      expect: /^SyntaxError: Octal literals are not allowed in strict mode/ },
-    { client: client_unix, send: '(function() { "use strict"; return { p: 1, p: 2 }; })()',
-      expect: /^SyntaxError: Duplicate data property in object literal not allowed in strict mode/ },
+      expect: /^SyntaxError: (Octal literals are not allowed in strict mode|Octal numeric literals and escape characters not allowed in strict mode)/ },
+    //BAD test: following is legal in ES6
+    //{ client: client_unix, send: '(function() { "use strict"; return { p: 1, p: 2 }; })()',
+    //  expect: /^SyntaxError: Duplicate data property in object literal not allowed in strict mode/ },
     { client: client_unix, send: '(function(a, a, b) { "use strict"; return a + b + c; })()',
-      expect: /^SyntaxError: Strict mode function may not have duplicate parameter names/ },
+      expect: /^SyntaxError: (Strict mode function may not have duplicate parameter names|Duplicate formal parameter names not allowed in strict mode)/ },
     { client: client_unix, send: '(function() { "use strict"; with (this) {} })()',
-      expect: /^SyntaxError: Strict mode code may not include a with statement/ },
+      expect: /^SyntaxError: (Strict mode code may not include a with statement|'with' statements are not allowed in strict mode)/ },
     { client: client_unix, send: '(function() { "use strict"; var x; delete x; })()',
-      expect: /^SyntaxError: Delete of an unqualified identifier in strict mode/ },
+      expect: /^SyntaxError: (Delete of an unqualified identifier in strict mode|Calling delete on expression not allowed in strict mode)/ },
     { client: client_unix, send: '(function() { "use strict"; eval = 17; })()',
-      expect: /^SyntaxError: Unexpected eval or arguments in strict mode/ },
-    { client: client_unix, send: '(function() { "use strict"; if (true) function f() { } })()',
-      expect: /^SyntaxError: In strict mode code, functions can only be declared at top level or immediately within another function/ },
+      expect: /^SyntaxError: (Unexpected eval or arguments in strict mode|Invalid usage of 'eval' in strict mode)/ },
+    //BAD test: following is legal in chakra and latest chrome
+    { client: client_unix, send: '(function() { "use strict"; if (true){ function f() { } } })()',
+    //  expect: /^SyntaxError: In strict mode code, functions can only be declared at top level or immediately within another function/ },
     // Named functions can be used:
     { client: client_unix, send: 'function blah() { return 1; }',
       expect: prompt_unix },

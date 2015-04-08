@@ -45,6 +45,15 @@
 
     process.argv[0] = process.execPath;
 
+    // if node is using chakra
+    // load the chakra patch module in order to fix some known issues
+    // caused by incompatbility of chakra and v8
+    if (process.ischakra) {
+      if (NativeModule.exists('_chakra_patch')) {
+        NativeModule.require('_chakra_patch');
+      }
+    }
+
     // There are various modes that Node can run in. The most common two
     // are running from a script and running the REPL - but there are a few
     // others like the debugger or running --eval arguments. Here we decide

@@ -12,6 +12,16 @@
     'node_use_openssl%': 'true',
     'node_shared_openssl%': 'false',
     'node_v8_options%': '',
+    'node_use_chakra%': 'false',
+    'node_use_private_chakra%': 'false',
+    'additional_library_files': [],
+    'conditions' : [
+    [ 'node_use_chakra=="true"', {
+      'additional_library_files': 
+      [
+        'lib/_chakra_patch.js',
+      ],
+    }]],
     'library_files': [
       'src/node.js',
       'lib/_debug_agent.js',
@@ -70,6 +80,7 @@
       'lib/zlib.js',
 
       'lib/internal/freelist.js',
+      '<@(additional_library_files)',
     ],
   },
 
@@ -81,8 +92,7 @@
       'dependencies': [
         'node_js2c#host',
         'deps/cares/cares.gyp:cares',
-        'deps/v8/tools/gyp/v8.gyp:v8',
-        'deps/v8/tools/gyp/v8.gyp:v8_libplatform'
+
       ],
 
       'include_dirs': [
@@ -165,8 +175,6 @@
         'src/util-inl.h',
         'src/util.cc',
         'deps/http_parser/http_parser.h',
-        'deps/v8/include/v8.h',
-        'deps/v8/include/v8-debug.h',
         '<(SHARED_INTERMEDIATE_DIR)/node_natives.h',
         # javascript files to make for an even more pleasant IDE experience
         '<@(library_files)',
@@ -310,6 +318,118 @@
             ],
           },
         }],
+        [ 'node_use_chakra=="false"', {
+          'sources': [
+            'deps/v8/include/v8.h',
+            'deps/v8/include/v8-debug.h',
+          ],
+          'dependencies': [         
+            'deps/v8/tools/gyp/v8.gyp:v8',
+            'deps/v8/tools/gyp/v8.gyp:v8_libplatform'
+          ],
+        }],
+        ['node_use_chakra=="true" and target_arch=="ia32"', {
+            'defines': [
+                '__i386__=1',
+                ] 
+            } 
+        ],
+        [ 'node_use_chakra=="true" and target_arch=="x64"', {
+            'defines': [
+                '__x86_64__=1',
+                ] 
+            } 
+        ],
+        [ 'node_use_chakra=="true" and target_arch=="arm"', {
+            'defines': [
+                '__arm__=1',
+                ] 
+            } 
+        ],
+        [ 'node_use_chakra=="true"', {
+          'defines': [
+            'USE_CHAKRA=1',
+            'USE_EDGEMODE_JSRT=1',
+            # Chakra requires WinSDK version >= Windows 7
+            '_WIN32_WINNT=0x0601',
+          ],
+          'sources': [
+            'deps/chakra/include/v8.h',
+            'deps/chakra/include/v8-debug.h',
+            'deps/chakra/include/v8-profiler.h',
+            'deps/chakra/include/v8chakra.h',
+            'deps/chakra/include/jsrtutils.h',
+            'deps/chakra/include/jsrtproxyutils.h',
+            'deps/chakra/src/jsrtproxyutils.cc',
+            'deps/chakra/src/jsrtutils.cc',
+            'deps/chakra/src/v8accessorinfo.cc',
+            'deps/chakra/src/v8arguments.cc',
+            'deps/chakra/src/v8array.cc',
+            'deps/chakra/src/v8boolean.cc',
+            'deps/chakra/src/v8context.cc',
+            'deps/chakra/src/v8date.cc',
+            'deps/chakra/src/v8debug.cc',
+            'deps/chakra/src/v8exception.cc',
+            'deps/chakra/src/v8function.cc',
+            'deps/chakra/src/v8functiontemplate.cc',
+            'deps/chakra/src/v8global.cc',
+            'deps/chakra/src/v8handlescope.cc',
+            'deps/chakra/src/v8int32.cc',
+            'deps/chakra/src/v8integer.cc',
+            'deps/chakra/src/v8isolate.cc',
+            'deps/chakra/src/v8message.cc',
+            'deps/chakra/src/v8number.cc',
+            'deps/chakra/src/v8object.cc',
+            'deps/chakra/src/v8persistent.cc',
+            'deps/chakra/src/v8objecttemplate.cc',
+            'deps/chakra/src/v8script.cc',
+            'deps/chakra/src/v8signature.cc',
+            'deps/chakra/src/v8string.cc',
+            'deps/chakra/src/v8trycatch.cc',
+            'deps/chakra/src/v8uint32.cc',
+            'deps/chakra/src/v8value.cc', 
+            'deps/chakra/src/v8v8.cc',
+            'deps/chakra/src/v8external.cc'
+          ],
+          'include_dirs': [
+            'deps/chakra/include',
+          ],
+          'libraries': [ '-lchakrart.lib', '-lole32.lib' ],
+          'conditions': [ 
+            [ 'node_use_private_chakra=="true"', {
+              'sources': [
+                '<(private_chakra_dir)/include/jsrt.h',
+                '<(private_chakra_dir)/include/chakrart.h',
+              ],
+              'include_dirs': [
+                '<(private_chakra_dir)/include'
+              ],
+              'msvs_settings': {
+                'VCLinkerTool': {
+                  'AdditionalLibraryDirectories': [
+                    '<(private_chakra_dir)/<(private_chakra_build)/<(target_arch)'
+                  ]
+                }
+              },
+              'copies': [
+                { 
+                  'destination': '<(PRODUCT_DIR)',
+                  'files': [ 
+                    '<(private_chakra_dir)/<(private_chakra_build)/<(target_arch)/chakra.dll',
+                    '<(private_chakra_dir)/<(private_chakra_build)/<(target_arch)/chakra.pdb',
+                  ]
+                },
+                { 
+                  'destination': '<(PRODUCT_DIR)/lib',
+                  'files': [ 
+                    '<(private_chakra_dir)/<(private_chakra_build)/<(target_arch)/chakrart.lib',
+                  ]
+                }
+              ]
+            }
+          ]]
+        }],
+
         [ 'node_shared_zlib=="false"', {
           'dependencies': [ 'deps/zlib/zlib.gyp:zlib' ],
         }],

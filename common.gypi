@@ -236,10 +236,15 @@
         'BufferSecurityCheck': 'true',
         'ExceptionHandling': 0, # /EHsc
         'SuppressStartupBanner': 'true',
-        # Disable "warning C4267: conversion from 'size_t' to 'int',
-        # possible loss of data".  Many originate from our dependencies
-        # and their sheer number drowns out other, more legitimate warnings.
-        'DisableSpecificWarnings': ['4267'],
+        # Disable warnings:
+        # - "C4251: class needs to have dll-interface"
+        # - "C4275: non-DLL-interface  used as base for DLL-interface"
+        #   Over 10k of these warnings are generated when compiling node,
+        #   originating from v8.h.
+        # - "C4267: conversion from 'size_t' to 'int'"
+        #   Many any originate from our dependencies, and their sheer number
+        #   drowns out other, more legitimate warnings.
+        'DisableSpecificWarnings': ['4251', '4267'],
         'WarnAsError': 'false',
       },
       'VCLinkerTool': {
